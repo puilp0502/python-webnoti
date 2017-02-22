@@ -41,13 +41,14 @@ class Notification(object):
         except KeyError as e:
             raise KeyError('Missing key in subscription object: %r' % e.args[0])
 
-        if type(message) is bytes:
+        if isinstance(message, bytes):
             self.message = message
-        else:
-            try:
+        elif isinstance(message, str):
                 self.message = message.encode('utf-8')
-            except AttributeError:
-                raise TypeError('%r must be bytes or str' % message)
+        elif message is None:
+            self.message = None
+        else:
+            raise TypeError('%r must be bytes or str or None' % message)
 
         if private_key is not None:
             self.vapid_private_key = private_key
@@ -74,13 +75,21 @@ class Notification(object):
         }
 
     def send(self):
-        headers, ciphertext = encrypt_data(self.p256dh, self.auth_secret, self.message)
+        if self.message is not None:
+            headers, ciphertext = encrypt_data(self.p256dh, self.auth_secret, self.message)
+        else:
+            headers = {'Content-Length': '0'}
+            ciphertext = b''
         headers['TTL'] = str(self.TTL)
         if self.vapid_private_key is not None:
-            vapid_public_key_b64 = b64encode(self.vapid_private_key.public_key().public_numbers().encode_point())
+            vapid_public_key_b64 = b64encode(self.vapid_private_key.public_key().public_numbers().encode_point())\
+                .decode('utf-8').strip('=')
             vapid = sign_vapid(self.generate_claims(), self.vapid_private_key)
             headers['Authorization'] = 'WebPush ' + vapid
-            headers['Crypto-Key'] += '; p256ecdsa=' + vapid_public_key_b64.decode('utf-8').strip('=')
+            if 'Crypto-Key' in headers:
+                headers['Crypto-Key'] += '; p256ecdsa=' + vapid_public_key_b64
+            else:
+                headers['Crypto-Key'] = 'p256ecdsa=' + vapid_public_key_b64
         return requests.post(self.endpoint, headers=headers, data=ciphertext)
 
 
