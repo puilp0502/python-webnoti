@@ -24,6 +24,7 @@ To send a notification:
     send_notification(subscription, "Hello from server") # For Firefox
     send_notification(subscription, "Hello from server", # For Chrome
                       'mailto:admin@example.com', get_private_key('privkey.pem', generate=True))
-    # subscription should be obtained from the client.
+    # subscription can be obtained from the client.
 
-Check out `python-webnoti-example<https://github.com/puilp0502/python-webnoti-example>`_ for more details.
+Check out `python-webnoti-example <https://github.com/puilp0502/python-webnoti-example>`_
+for the full example.
