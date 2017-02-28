@@ -6,19 +6,18 @@ from cryptography.hazmat.primitives import serialization
 from .encryption import hkdf, create_info
 
 
-def get_private_key(pem_location, password, generate=False):
+def get_private_key(pem_location, password=None, generate=False):
     """
     Get private key from PEM file.
 
     :param pem_location: Location of PEM file.
     :type pem_location: str
-    :param password: Password of PEM file.
+    :param password: Password of PEM file. None if not encrypted.
     :type password: bytes
     :param generate: if True and PEM does not exist, generate PEM file.
     :return: ec.EllipticCurvePrivateKey instance
     """
-    if not isinstance(password, bytes):
-        raise TypeError('password must be bytes')
+
     try:
         private_key_pem = open(pem_location, 'rb').read()
         private_key = serialization.load_pem_private_key(
@@ -28,12 +27,19 @@ def get_private_key(pem_location, password, generate=False):
         )
     except FileNotFoundError as e:
         if generate:
+            try:
+                algorithm = serialization.BestAvailableEncryption(password)
+            except ValueError as e:
+                if password is None:
+                    algorithm = serialization.NoEncryption()
+                else:
+                    raise e
             pem = open(pem_location, 'wb')
             private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
             private_key_pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.BestAvailableEncryption(password)
+                encryption_algorithm=algorithm
             )
             pem.write(private_key_pem)
         else:
