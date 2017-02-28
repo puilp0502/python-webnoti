@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import serialization
 from .encryption import hkdf, create_info
 
 
-def get_private_key(pem_location, password, generate=False):
+def get_private_key(pem_location, password=None, generate=False):
     """
     Get private key from PEM file.
 
