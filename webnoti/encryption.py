@@ -5,6 +5,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 
@@ -86,9 +87,9 @@ def encrypt_data(client_encoded_public_key, client_auth_secret, data):
     :param data: An actual data to send (bytes)
     :return: A 2-tuple containing (headers, data), each in dict, bytes
     """
-    client_public_key = ec.EllipticCurvePublicNumbers\
-                          .from_encoded_point(curve, client_encoded_public_key)\
-                          .public_key(backend)
+    client_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        curve, client_encoded_public_key
+    )
 
     # Generate salt
     salt = os.urandom(16)
@@ -96,7 +97,7 @@ def encrypt_data(client_encoded_public_key, client_auth_secret, data):
     # Generate Server Public & Private Key pair
     server_private_key = ec.generate_private_key(curve, backend)
     server_public_key = server_private_key.public_key()
-    server_public_key_bytes = server_public_key.public_numbers().encode_point()
+    server_public_key_bytes = server_public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
     # Derive shared secret using ECDH
     shared_secret = server_private_key.exchange(ec.ECDH(), client_public_key)
 
