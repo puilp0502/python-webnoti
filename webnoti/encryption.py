@@ -116,7 +116,6 @@ def encrypt_data(client_encoded_public_key, client_auth_secret, data):
     # Generate padding
     # Length of the padding, up to 65535 bytes
     padding_length = len(data) % 32
-    print(padding_length)
     # Append the length of the padding to the front
     padding = padding_length.to_bytes(2, byteorder='big')
     # Repeat null to the end
@@ -140,3 +139,4 @@ def encrypt_data(client_encoded_public_key, client_auth_secret, data):
     }
 
     return headers, ciphertext
+
