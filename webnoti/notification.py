@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from urllib import parse
 
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 import jwt
 import requests
 
@@ -82,8 +83,15 @@ class Notification(object):
             ciphertext = b''
         headers['TTL'] = str(self.TTL)
         if self.vapid_private_key is not None:
-            vapid_public_key_b64 = b64encode(self.vapid_private_key.public_key().public_numbers().encode_point())\
-                .decode('utf-8').strip('=')
+            vapid_public_key_b64 = (
+                b64encode(
+                    self.vapid_private_key.public_key().public_bytes(
+                        Encoding.X962, PublicFormat.UncompressedPoint
+                    )
+                )
+                .decode("utf-8")
+                .strip("=")
+            )
             signed_claim = sign_vapid(self.generate_claims(), self.vapid_private_key)
             headers[
                 "Authorization"
