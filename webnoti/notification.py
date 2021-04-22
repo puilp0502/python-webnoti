@@ -84,12 +84,12 @@ class Notification(object):
         if self.vapid_private_key is not None:
             vapid_public_key_b64 = b64encode(self.vapid_private_key.public_key().public_numbers().encode_point())\
                 .decode('utf-8').strip('=')
-            vapid = sign_vapid(self.generate_claims(), self.vapid_private_key)
-            headers['Authorization'] = 'WebPush ' + vapid
-            if 'Crypto-Key' in headers:
-                headers['Crypto-Key'] += '; p256ecdsa=' + vapid_public_key_b64
-            else:
-                headers['Crypto-Key'] = 'p256ecdsa=' + vapid_public_key_b64
+            signed_claim = sign_vapid(self.generate_claims(), self.vapid_private_key)
+            headers[
+                "Authorization"
+            ] = "vapid t={signed_claim}, k={vapid_signing_key}".format(
+                signed_claim=signed_claim, vapid_signing_key=vapid_public_key_b64
+            )
         return requests.post(self.endpoint, headers=headers, data=ciphertext)
 
 
